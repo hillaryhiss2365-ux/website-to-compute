@@ -1,0 +1,25 @@
+// index.js — safe real: connects to Deriv test WebSocket and logs Even/Odd signals
+const WebSocket = require("ws");
+
+const APP_ID = 1089;           // official Deriv test app_id
+const SYMBOL = "R_100";        // example synthetic index
+
+const ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
+
+ws.on("open", () => {
+  console.log("✅ Connected to Deriv WebSocket demo server");
+  ws.send(JSON.stringify({ ticks: SYMBOL, subscribe: 1 }));
+});
+
+ws.on("message", (data) => {
+  const msg = JSON.parse(data);
+  if (msg.tick) {
+    const quote = msg.tick.quote;
+    const digit = parseInt(quote.toString().slice(-1));
+    const signal = digit % 2 === 0 ? "EVEN" : "ODD";
+    console.log(`${new Date().toLocaleTimeString()} → ${quote} → ${signal}`);
+  }
+});
+
+ws.on("close", () => console.log("❌ WebSocket closed"));
+ws.on("error", (e) => console.error("Error:", e));
